@@ -1,0 +1,1 @@
+ALTER TABLE organizations ALTER COLUMN state_code TYPE VARCHAR(100);

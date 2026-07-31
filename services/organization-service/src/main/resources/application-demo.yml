@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: organization-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://ddrs-postgres:5432/ddrs_organization}
+    username: ${SPRING_DATASOURCE_USERNAME:ddrs_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:ddrs_secret}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    schemas: public
+
+server:
+  port: 8082

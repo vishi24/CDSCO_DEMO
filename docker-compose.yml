@@ -1,0 +1,254 @@
+version: '3.8'
+
+services:
+  # ── Infrastructure ─────────────────────────────────────────────
+  ddrs-postgres:
+    image: postgres:16-alpine
+    command: postgres -c max_connections=500
+    environment:
+      POSTGRES_DB: ddrs
+      POSTGRES_USER: ddrs_user
+      POSTGRES_PASSWORD: ddrs_secret
+    volumes: 
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck: 
+      test: ["CMD", "pg_isready", "-U", "ddrs_user", "-d", "ddrs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ddrs-redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass redis_secret
+    ports:
+      - "6379:6379"
+
+  ddrs-minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_secret
+    volumes: 
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  ddrs-opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+    ports:
+      - "9200:9200"
+
+  ddrs-nginx:
+    image: nginx:alpine
+    ports: 
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      # The frontend build will be mapped here later
+      - ./frontend/dist:/usr/share/nginx/html  
+    depends_on: 
+      - identity-service
+      - organization-service
+      - document-service
+      - licence-service
+      - workflow-service
+      - certificate-service
+      - registry-service
+      - dashboard-service
+      - admin-service
+
+  # ── Application Services (Phase 1) ───────────────────────────────────
+  identity-service:      
+    build: 
+      context: .
+      dockerfile: services/identity-service/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_identity
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+      - JWT_SECRET=ddrs_super_secret_key_for_jwt_generation_2026
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  organization-service:
+    build: 
+      context: .
+      dockerfile: services/organization-service/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_organization
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  document-service:
+    build: 
+      context: .
+      dockerfile: services/document-service/Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - MINIO_URL=http://ddrs-minio:9000
+      - MINIO_ACCESS_KEY=minio_admin
+      - MINIO_SECRET_KEY=minio_secret
+    depends_on:
+      - ddrs-minio
+
+  licence-service:
+    build: 
+      context: .
+      dockerfile: services/licence-service/Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_licence
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  workflow-service:
+    build: 
+      context: .
+      dockerfile: services/workflow-service/Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_workflow
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  certificate-service:
+    build: 
+      context: .
+      dockerfile: services/certificate-service/Dockerfile
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_certificate
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  registry-service:
+    build: 
+      context: .
+      dockerfile: services/registry-service/Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_registry
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  dashboard-service:
+    build: 
+      context: .
+      dockerfile: services/dashboard-service/Dockerfile
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_dashboard
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  admin-service:
+    build: 
+      context: .
+      dockerfile: services/admin-service/Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_admin
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: services/audit-service/Dockerfile
+    ports:
+      - "8091:8091"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_audit
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=demo
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ddrs-postgres:5432/ddrs_notification
+      - SPRING_DATASOURCE_USERNAME=ddrs_user
+      - SPRING_DATASOURCE_PASSWORD=ddrs_secret
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+
+  ddrs-data-loader:
+    build:
+      context: ./data-loader
+      dockerfile: Dockerfile
+    restart: "no"
+    depends_on:
+      ddrs-postgres:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+      organization-service:
+        condition: service_started
+      licence-service:
+        condition: service_started
+      registry-service:
+        condition: service_started
+      certificate-service:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  minio_data:
