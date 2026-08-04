@@ -7,6 +7,8 @@ import {
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../../app/store';
 import axios from 'axios';
 import { PaymentSimulator } from './PaymentSimulator';
 
@@ -74,12 +76,15 @@ const initialValues = {
 export const NewApplication: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { organizationId, token } = useSelector((state: RootState) => state.auth);
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [dscSigned, setDscSigned] = useState(false);
   const [dscOtp, setDscOtp] = useState('');
   const isLastStep = activeStep === steps.length - 1;
+
+  const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
   const handleNext = async (values: typeof initialValues, actions: any) => {
     if (activeStep === 4 && !paymentSuccess) {
@@ -105,12 +110,13 @@ export const NewApplication: React.FC = () => {
         const payload = {
           ...values,
           licenceType: 'MANUFACTURING',
-          organizationId: '00000000-0000-0000-0000-000000000000',
+          // Use the logged-in user's organizationId from JWT, fall back to demo UUID
+          organizationId: organizationId || '00000000-0000-0000-0000-000000000001',
           feePaid: true, feeAmount: fee,
           digitalSigned: true,
           foreignRegulatoryApprovals: JSON.stringify(values.foreignRegulatoryApprovals),
         };
-        const response = await axios.post('/api/v1/applications', payload);
+        const response = await axios.post('/api/v1/applications', payload, { headers: authHeader });
         const arn = response.data.arnNumber || response.data.applicationNumber;
         navigate('/industry/applications', {
           state: { message: `Application ${arn} submitted successfully! Track it from your dashboard.` }

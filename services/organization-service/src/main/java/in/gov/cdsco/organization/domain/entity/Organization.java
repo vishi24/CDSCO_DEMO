@@ -71,6 +71,26 @@ public class Organization {
     @Column(name = "ddrs_user_id")
     private String ddrsUserId;
 
+    // Transient: passed from frontend for user creation in identity-service, not persisted
+    @jakarta.persistence.Transient
+    private String passwordHash;     // raw password from registration form (field name matches frontend)
+    @jakarta.persistence.Transient
+    private String password;         // alias
+    @jakarta.persistence.Transient
+    private String fullName;
+    @jakarta.persistence.Transient
+    private String dateOfBirth;
+    @jakarta.persistence.Transient
+    private String nationality;
+    @jakarta.persistence.Transient
+    private String qualification;
+    @jakarta.persistence.Transient
+    private Integer experienceYears;
+    @jakarta.persistence.Transient
+    private String fatherSpouseName;
+    @jakarta.persistence.Transient
+    private String pharmacistRegNo;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

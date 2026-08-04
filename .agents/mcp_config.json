@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "headroom": {
+      "command": "C:\\Users\\Admin\\.local\\bin\\headroom.exe",
+      "args": ["mcp", "serve"]
+    }
+  }
+}

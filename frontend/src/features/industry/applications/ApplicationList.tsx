@@ -5,6 +5,8 @@ import {
   IconButton, Alert, Tooltip
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../../app/store';
 import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
 import VerifiedIcon from '@mui/icons-material/Verified';
@@ -35,6 +37,7 @@ export const ApplicationList: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const successMessage = (location.state as any)?.message;
+  const { organizationId, token } = useSelector((state: RootState) => state.auth);
 
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,11 +46,16 @@ export const ApplicationList: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
-    axios.get('/api/v1/applications?organizationId=00000000-0000-0000-0000-000000000001')
+    // Use the organizationId from JWT if available, fall back to fetching all
+    const orgId = organizationId || '';
+    const url = orgId
+      ? `/api/v1/applications?organizationId=${orgId}`
+      : `/api/v1/applications`;
+    axios.get(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
       .then(res => setRows(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [organizationId, token]);
 
   const openTimeline = async (row: any) => {
     setTimelineApp(row);

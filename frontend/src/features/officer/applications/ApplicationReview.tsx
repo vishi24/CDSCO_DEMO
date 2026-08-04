@@ -65,7 +65,7 @@ export const ApplicationReview: React.FC = () => {
 
   const handleScrutinyAction = async (action: string) => {
     try {
-      await axios.post(`/api/v1/workflows/applications/${id}/transition`, {
+      await axios.post(`/api/v1/applications/${id}/transition`, {
         action,
         toStage: action,
         comments: deficiencyRemarks || scrutinyComments,
@@ -93,7 +93,7 @@ export const ApplicationReview: React.FC = () => {
         latitude: location?.lat,
         longitude: location?.lng
       });
-      await axios.post(`/api/v1/workflows/applications/${id}/transition`, {
+      await axios.post(`/api/v1/applications/${id}/transition`, {
         action: 'INSPECTION_COMPLETE',
         toStage: 'INSPECTION_COMPLETED',
         comments: criticalObservations
@@ -114,7 +114,7 @@ export const ApplicationReview: React.FC = () => {
     const year = new Date().getFullYear();
     const rcNo = `RC/CDSCO/${year}/${String(Math.floor(Math.random() * 90000) + 10000).padStart(8, '0')}`;
     try {
-      await axios.post(`/api/v1/workflows/applications/${id}/transition`, {
+      await axios.post(`/api/v1/applications/${id}/transition`, {
         action: 'APPROVE',
         toStage: 'APPROVED',
         comments: approvalConditions || 'Approved',
@@ -135,7 +135,7 @@ export const ApplicationReview: React.FC = () => {
 
   const handleReject = async () => {
     try {
-      await axios.post(`/api/v1/workflows/applications/${id}/transition`, {
+      await axios.post(`/api/v1/applications/${id}/transition`, {
         action: 'REJECT',
         toStage: 'REJECTED',
         comments: rejectionNarrative,
