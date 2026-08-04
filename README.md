@@ -77,11 +77,15 @@ This demo supports the end-to-end journey of an Industry User interacting with t
 6. Review the information and accept the declaration to submit the registration. The organization will be created in a `PENDING_APPROVAL` status.
 
 ### B. User Login
-For demonstration purposes, the database is pre-seeded with a verified industry user account.
-1. Navigate to the **Login** page.
-2. Enter the following credentials to access the Industry Dashboard:
-   - **Email:** `industry@example.com`
-   - **Password:** `password`
+Users can log in immediately after successful registration. For demonstration purposes, the database is also pre-seeded with verified accounts:
+
+**Industry User (Applicant):**
+- **Email:** `industry@example.com`
+- **Password:** `password`
+
+**CDSCO Officer (Reviewer):**
+- **Email:** `officer@cdsco.gov.in`
+- **Password:** `password`
 
 ### C. Submitting a New Drug Application
 1. Once logged in as the industry user, navigate to the **Applications** section and click on **New Application**.
@@ -92,3 +96,18 @@ For demonstration purposes, the database is pre-seeded with a verified industry 
 6. **Fee & Payment**: Use the dummy "Payment Simulator" to bypass Bharat Kosh payment processing and instantly generate a UTR payment reference.
 7. **Digital Signature (DSC)**: When prompted for the DSC Token PIN, use the demo hint PIN: **`123456`**.
 8. **Review & Submit**: Submit the final application. You will receive an Application Reference Number (ARN), and the application status will change to `DRAFT` or `SUBMITTED`.
+
+### D. Officer Review Workflow
+1. Log in using the **CDSCO Officer** credentials.
+2. Navigate to the **Application Queue** to see pending applications.
+3. **Document Scrutiny**: Review application details and mark the scrutiny status (e.g., Acceptable, Query Raised).
+4. **Field Inspection**: Schedule inspections, record checklist results, capture geotagged coordinates, and submit the inspection report.
+5. **Decision & Issuance**: Approve or reject the application. Upon approval (use DSC PIN `123456`), a Registration Certificate (RC) number is generated and the digital licence card is issued.
+
+---
+
+## 4. Developer Tooling (MCP)
+
+This project is configured to work seamlessly with Model Context Protocol (MCP) servers:
+- **Graphify**: Generates a rich semantic knowledge graph of the microservices architecture, allowing the AI to query dependencies, API routes, and database schemas instantly without loading the entire codebase.
+- **Headroom**: An intelligent context-compression proxy that minimizes token usage when communicating with large language models during development.
