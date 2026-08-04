@@ -1,0 +1,2 @@
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS channel VARCHAR(50);
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS reference_id VARCHAR(255);

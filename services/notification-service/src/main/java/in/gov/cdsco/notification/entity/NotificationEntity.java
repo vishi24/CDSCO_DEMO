@@ -28,6 +28,12 @@ public class NotificationEntity {
     @Column(nullable = false)
     private String type; // INFO, WARNING, SUCCESS, ERROR
 
+    @Column(name = "channel")
+    private String channel = "IN_APP"; // IN_APP, SMS_FAKE, EMAIL_FAKE
+
+    @Column(name = "reference_id")
+    private String referenceId;
+
     @Column(name = "is_read")
     private boolean read = false;
 

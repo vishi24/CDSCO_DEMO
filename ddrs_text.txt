@@ -1,0 +1,574 @@
+﻿Drug & Drug Regulatory System (DDRS)
+Wireframe and data points 
+Contents
+1.User registration1
+a.Process Flow1
+b.Data Field1
+c.Add Profile Details2
+2.Drug License Application – Form 40 (Registration Certificate)2
+a.Application Case Types2
+b.Data Fields – Form 40 (Registration Certificate Application)3
+c.Document Checklist – Form 404
+3.Inspection & Approval Process4
+a.Data Fields – Officer Review & Application Processing4
+b.Application Status & Applicant Dashboard5
+c.Notification Triggers6
+FRS For DDRS system
+User registration 
+Process Flow 
+User visits DDRS portal → Clicks 'New Registration'
+Selects User Type (Manufacturer / Importer / CRO / Ethics Committee / Lab / Distributor)
+Fills Registration Form – Organisation Details → Authorised Signatory → Verification → Set Password
+Mobile OTP (6-digit, valid 5 mins) + Email OTP (valid 15 mins) verified
+On successful verification → System generates unique User ID (format: DDRS/YYYY/XXXXXXXX) and sends login credentials
+Data Field
+#
+Field Name
+Data Type
+Max Len
+Validation / Format
+Mandatory
+Notes
+1
+User Type
+Dropdown
+–
+Manufacturer / Importer / CRO / Ethics Committee / Lab / Distributor / Retailer / Individual
+MANDATORY
+Drives form configuration
+2
+Organisation / Company Name
+Text
+200
+Alphanumeric; must match MCA records
+MANDATORY
+Auto-verified via MCA API
+3
+CIN / LLPIN
+Text
+21
+Format: U/L + 5 digits + State + 4 digits + 6 digits
+MANDATORY
+Pulls director details from MCA
+4
+PAN Number
+Text
+10
+Regex: [A-Z]{5}[0-9]{4}[A-Z]; verified via NSDL
+MANDATORY
+Must be unique across all users
+5
+GST Number
+Text
+15
+2-digit state code + PAN + 3 chars; verified via GSTN API
+MANDATORY
+6
+Authorised Signatory Name
+Text
+150
+Alphabets + spaces; no special characters
+MANDATORY
+7
+Designation
+Text
+100
+Free text
+MANDATORY
+8
+Aadhaar Number
+Number
+12
+12-digit numeric; masked display; UIDAI e-KYC consent required
+MANDATORY
+Tokenised – not stored plain text
+9
+Mobile Number
+Number
+10
+10-digit; starts with 6–9; OTP sent for verification
+MANDATORY
+OTP verified at registration
+10
+Email Address
+Email
+150
+Standard email format; OTP sent
+MANDATORY
+Primary communication channel
+11
+Password
+Password
+20
+Min 8 chars; upper + lower + digit + special char
+MANDATORY
+Bcrypt hashed; never stored plain
+12
+Confirm Password
+Password
+20
+Must match Password field exactly
+MANDATORY
+13
+Alternate Mobile
+Number
+10
+10-digit numeric
+OPTIONAL
+14
+Alternate Email
+Email
+150
+Standard email format
+OPTIONAL
+15
+CAPTCHA
+Text
+8
+Case-insensitive alphanumeric
+MANDATORY
+Anti-bot control
+16
+Declaration Checkbox
+Boolean
+–
+Must be checked to enable Submit button
+MANDATORY
+Legal declaration text displayed
+Add Profile Details
+#
+Field Name
+Data Type
+Max Len
+Validation / Format
+Mandatory
+Notes
+1
+Full Name of Applicant
+Text
+200
+Alpha + spaces only
+MANDATORY
+2
+Father's / Spouse Name
+Text
+200
+Alpha + spaces only
+MANDATORY
+3
+Date of Birth
+Date
+–
+DD/MM/YYYY; must be 18+ years from current date
+MANDATORY
+4
+Nationality
+Dropdown
+–
+Country list; default: Indian
+MANDATORY
+5
+Qualification
+Text
+200
+Free text
+MANDATORY
+6
+Experience (Years)
+Number
+2
+Range: 0–60
+MANDATORY
+7
+Pharmacist Registration No.
+Text
+50
+Verified via Pharmacy Council of India API
+CONDITIONAL
+Required for pharmacy applicants
+8
+Profile Photo
+File Upload
+500KB
+JPG/PNG; min 200×200px
+OPTIONAL
+Drug License Application – Form 40 (Registration Certificate)
+Form 40 is used to apply for a Registration Certificate (RC) for new drugs, biologics, vaccines, medical devices, and cosmetics. Three case types are supported: Fresh, Endorsement, and Re-registration. Endorsement / Re-registration require prior RC details entered in Historical Data before accessing Form 40.
+Application Case Types
+Fresh: First-time application for RC for a product not previously registered in India.
+Endorsement: Addition of new strength, new presentation, or new indication to an existing RC. Requires existing RC Number to be entered first in Permission Owned / Historical Data.
+Re-registration: Renewal of an expired RC. Requires previous RC Number and expiry date in Historical Data.
+Data Fields – Form 40 (Registration Certificate Application)
+#
+Field Name
+Data Type
+Max Len
+Validation / Format
+Mandatory
+Notes
+1
+Case Type
+Radio
+–
+Fresh / Endorsement / Re-registration
+MANDATORY
+2
+Previous RC Number
+Text
+50
+Format: RC/CDSCO/YYYY/XXXXXXX; validated against registry
+CONDITIONAL
+Required for Endorsement / Re-registration
+3
+Generic Name (INN)
+Text
+300
+INN / IPC nomenclature
+MANDATORY
+4
+Brand / Proprietary Name
+Text
+200
+Duplicate brand name check across DDRS registry
+MANDATORY
+5
+Drug Category
+Dropdown
+–
+New Drug / Subsequent New Drug / FDC / Biological / Vaccine / Medical Device / Cosmetic / Veterinary
+MANDATORY
+6
+Dosage Form
+Dropdown
+–
+Tablet / Capsule / Injection / Syrup / Ointment / Patch / Others
+MANDATORY
+7
+Strength / Composition
+Text
+500
+E.g., Paracetamol 500 mg
+MANDATORY
+8
+Route of Administration
+Dropdown
+–
+Oral / Parenteral / Topical / Inhalation / Ophthalmic / Others
+MANDATORY
+9
+Therapeutic Category (ATC)
+Dropdown
+–
+WHO ATC Classification Level 1–4
+MANDATORY
+10
+Proposed Indication(s)
+Textarea
+2000
+Free text; ICD-10 code linkage
+MANDATORY
+11
+Manufacturer Name
+Text
+300
+Must match Manufacturing License registry
+MANDATORY
+12
+Manufacturing Site Address
+Textarea
+500
+Full address including country
+MANDATORY
+13
+Country of Origin
+Dropdown
+–
+Country list (ISO 3166)
+MANDATORY
+14
+Manufacturing License Number
+Text
+100
+Cross-validated with State LA / CDSCO records
+MANDATORY
+15
+GMP Compliance Certificate
+File Upload
+10 MB
+PDF; issued by competent authority
+MANDATORY
+16
+Approval Status in Country of Origin
+Dropdown
+–
+Approved / Under Review / Not Approved
+MANDATORY
+17
+Foreign Regulatory Approval
+Multi-select
+–
+US FDA / EMA / MHRA / TGA / PMDA / Others
+CONDITIONAL
+Required if foreign approval cited
+18
+Foreign Approval Certificate
+File Upload
+10 MB
+PDF
+CONDITIONAL
+If foreign approval cited
+19
+Clinical Trial Dossier (CTD/eCTD)
+File Upload
+100 MB
+PDF/ZIP; CTD Module 1–5 structure
+MANDATORY
+20
+Proposed Package Insert / Label
+File Upload
+10 MB
+PDF
+MANDATORY
+21
+Application Fee (auto-calculated)
+Currency (INR)
+–
+Read-only; system-calculated based on product category and case type
+MANDATORY
+22
+Payment Mode
+Dropdown
+–
+Net Banking / UPI / NEFT / Demand Draft
+MANDATORY
+Via Bharat Kosh
+23
+Transaction / UTR Reference
+Text
+50
+Auto-filled on successful Bharat Kosh payment
+MANDATORY
+24
+Digital Signature (DSC / OTP)
+Digital Signature
+–
+Aadhaar OTP / DSC; RSA-based PKI; PKCS#7 signed
+MANDATORY
+Signatory must match Profile
+Document Checklist – Form 40
+#
+Document
+Format
+Max Size
+Mandatory
+1
+CTD Dossier (Module 1–5 or eCTD)
+PDF / ZIP
+100 MB
+MANDATORY
+2
+Proposed Package Insert / Labelling
+PDF
+10 MB
+MANDATORY
+3
+GMP Certificate from Competent Authority
+PDF
+10 MB
+MANDATORY
+4
+Foreign Regulatory Approval Certificate
+PDF
+10 MB
+CONDITIONAL
+5
+Power of Attorney / Authorisation Letter
+PDF
+5 MB
+MANDATORY
+6
+Patent Status Declaration
+PDF
+5 MB
+MANDATORY
+7
+Bio-equivalence / Clinical Study Reports
+PDF
+50 MB
+CONDITIONAL
+8
+Undertaking / Declaration Form
+PDF
+2 MB
+MANDATORY
+Inspection & Approval Process
+Application Submitted → ARN Generated → Officer Assignment (CDSCO)
+Document Scrutiny (Preliminary Check) → Deficiency Letter if incomplete
+Applicant Response / Resubmission within deadline
+Technical Scrutiny (Subject Expert Committee / Division Head)
+Site Inspection Scheduled (if required) → Geotagged inspection with Form 35 / MD-11 checklist
+Inspection Report submitted by Drug Inspector (digitally signed)
+Expert Committee Review (SEC / NDAC meeting) if applicable
+Decision: Approved (Form 41 / Form 10 issued) → RC / License delivered to DigiLocker + portal
+Decision: Rejected → Rejection order issued; appeal option enabled for applicant
+Data Fields – Officer Review & Application Processing
+#
+Field Name
+Data Type
+Max Len
+Validation / Format
+Mandatory
+Notes
+1
+Assigned Officer (CDSCO)
+Dropdown
+–
+Officers list; role: Drug Inspector / Division Head
+MANDATORY
+2
+Date of Assignment
+Date (auto)
+–
+Auto-populated; cannot be future date
+MANDATORY
+3
+Scrutiny Status
+Dropdown
+–
+Under Review / Deficiency Raised / Technical Review / Inspection Required / Approved / Rejected
+MANDATORY
+4
+Deficiency Remarks
+Textarea
+5000
+Required if status = Deficiency Raised
+CONDITIONAL
+5
+Applicant Response Deadline
+Date
+–
+≥ 15 days from deficiency date; ≤ 90 days
+CONDITIONAL
+6
+Inspection Type
+Dropdown
+–
+Routine / For Cause / Pre-licence / Joint
+CONDITIONAL
+7
+Inspection Date
+Date
+–
+Future date; advance notice ≥ 5 working days (routine)
+CONDITIONAL
+8
+Inspection Team Members
+Multi-select
+–
+Drug Inspector(s); joint inspection includes State DI
+CONDITIONAL
+9
+Site GPS Coordinates (Geotagging)
+GeoPoint
+–
+Auto-captured via mobile app; mandatory geotagging
+MANDATORY
+10
+Form 35 / MD-11 Checklist
+Structured Form
+–
+Each Schedule M / MDR 2017 item: Compliant / Non-Compliant / N/A
+MANDATORY
+11
+Critical Observations
+Textarea
+10000
+Classified: Critical / Major / Minor
+CONDITIONAL
+12
+Inspection Report Upload
+File Upload
+20 MB
+PDF; digitally signed by inspecting officer
+MANDATORY
+13
+Inspection Photographs
+File Upload (Multi)
+5 MB ea
+JPG/PNG; max 20 images; must be geotagged
+OPTIONAL
+14
+Decision Status
+Dropdown
+–
+Approved / Approved with Conditions / Rejected / Deferred
+MANDATORY
+15
+Approval Conditions
+Textarea
+5000
+Required if Approved with Conditions
+CONDITIONAL
+16
+Rejection Reason
+Dropdown + Textarea
+–
+Standardised reason code + narrative; required if Rejected
+CONDITIONAL
+17
+RC / License Number (auto-generated)
+Text (auto)
+–
+Format: RC/CDSCO/YYYY/XXXXXXXX; QR code auto-generated
+MANDATORY
+18
+License Issue Date
+Date (auto)
+–
+System date on approval; audit logged
+MANDATORY
+19
+License Validity Period
+Dropdown
+–
+1 / 3 / 5 Years (category-dependent); system sets expiry
+MANDATORY
+20
+Officer DSC on License
+Digital Signature
+–
+RSA / PKCS#7; officer's DSC; timestamp recorded
+MANDATORY
+Application Status & Applicant Dashboard
+Applicants can view all submitted, draft, approved and rejected applications from a central dashboard. Real-time status updates are provided via portal, SMS, and email at every stage transition.
+Status
+Description
+Next Action
+DRAFT
+Application saved but not submitted; auto-expires in 90 days
+Applicant completes and submits
+SUBMITTED
+Application submitted to CDSCO; awaiting officer assignment
+CDSCO assigns scrutiny officer
+UNDER REVIEW
+Documents being scrutinized by CDSCO officer / division
+Officer raises deficiency or advances
+DEFICIENCY RAISED
+CDSCO raised deficiency; applicant must respond within deadline
+Applicant uploads additional documents
+INSPECTION SCHEDULED
+Site inspection scheduled; applicant informed of date and team
+Inspection carried out; report submitted
+SEC REVIEW
+Application referred to Subject Expert Committee / NDAC
+Committee meeting outcome recorded
+APPROVED
+RC / License issued; available in Digi Locker and portal
+Applicant downloads license document
+REJECTED
+Application rejected; reason communicated; appeal option available
+Applicant may file appeal or fresh application
+Notification Triggers
+SMS + Email on: Application Submitted (ARN generated), Deficiency Raised (with deadline), Inspection Scheduled (with date and officer), SEC Review Scheduled, Application Approved (with RC/License number), Application Rejected (with reason code).
+In-app notifications visible on applicant dashboard with timestamp and action button.
+License / RC delivered to applicant's DigiLocker vault on approval.

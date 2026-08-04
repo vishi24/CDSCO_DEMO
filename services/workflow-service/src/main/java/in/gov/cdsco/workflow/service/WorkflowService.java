@@ -39,6 +39,24 @@ public class WorkflowService {
                 .orElseThrow(() -> new RuntimeException("Workflow instance not found for entity"));
 
         String fromStage = instance.getCurrentStage();
+        
+        // --- Enforce State Machine for Licence Applications ---
+        if ("LICENCE_APPLICATION".equals(entityType)) {
+            boolean valid = false;
+            if ("DRAFT".equals(fromStage) && "SUBMITTED".equals(toStage)) valid = true;
+            else if ("SUBMITTED".equals(fromStage) && "SCRUTINY".equals(toStage)) valid = true;
+            else if ("SCRUTINY".equals(fromStage) && "INSPECTION_SCHEDULED".equals(toStage)) valid = true;
+            else if ("INSPECTION_SCHEDULED".equals(fromStage) && "INSPECTION_COMPLETED".equals(toStage)) valid = true;
+            else if (("SCRUTINY".equals(fromStage) || "INSPECTION_COMPLETED".equals(fromStage)) && 
+                     ("APPROVED".equals(toStage) || "REJECTED".equals(toStage) || "QUERY_RAISED".equals(toStage))) valid = true;
+            else if ("QUERY_RAISED".equals(fromStage) && "SCRUTINY".equals(toStage)) valid = true;
+            
+            if (!valid) {
+                throw new IllegalStateException("Invalid workflow transition from " + fromStage + " to " + toStage);
+            }
+        }
+        // --------------------------------------------------------
+
         instance.setPreviousStage(fromStage);
         instance.setCurrentStage(toStage);
         instance = instanceRepository.save(instance);

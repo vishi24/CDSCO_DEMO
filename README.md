@@ -1,81 +1,94 @@
-# Digital Drugs Regulatory System (DDRS)
+# DDRS (Digital Drugs Regulatory System) - CDSCO Demo
 
-A comprehensive, microservices-based portal for the Central Drugs Standard Control Organisation (CDSCO), Government of India. This application digitizes and unifies the regulatory workflows for drug licensing, medical device registration, laboratory certification, and cross-registry search.
+This repository contains a demonstration of the Digital Drugs Regulatory System (DDRS), a modernized platform for the Central Drugs Standard Control Organisation (CDSCO). The system features a microservices-based backend architecture and a responsive React frontend, designed to handle organizational registrations, drug manufacturing licence applications, and workflow management.
 
-## Features Included in the Demo
+## 1. How to Setup on Local System
 
-1. **Authentication & Authorization (Role-Based)**
-   - Roles: `INDUSTRY`, `CDSCO_OFFICER`, `CDSCO_SENIOR`, `ADMIN`.
-   - Uses Mock Keycloak-compatible JWTs via an in-house Identity Service.
+### Prerequisites
+- **Docker** & **Docker Compose**: Required to run the backend microservices, NGINX API gateway, and PostgreSQL databases.
+- **Node.js** (v18+) & **npm**: Required to run the React frontend development server.
 
-2. **Organization Management**
-   - Industry users can register organizations.
-   - Officers can approve or reject organizations.
+### Backend Setup
+The backend consists of multiple Spring Boot microservices and a PostgreSQL database, all orchestrated via Docker Compose.
 
-3. **Licence Workflow (DIGIT-like Engine)**
-   - Stage transitions (Draft → Submitted → Scrutiny → Query → Approved → Certificate Issued).
-   - In-memory event bus (Spring `ApplicationEvents`) powering the workflow state machine.
+1. Open your terminal or command prompt.
+2. Navigate to the root of the project directory (`CDSCO_DEMO`).
+3. Run the following command to build and start all backend containers in detached mode:
+   ```bash
+   docker-compose up -d --build
+   ```
+4. Verify that all containers are running successfully using `docker ps`. You should see containers for the database, NGINX, and various microservices (identity, organization, licence, etc.).
 
-4. **Digital Certificates**
-   - PDF Generation via Jasper Reports.
-   - Dynamic QR codes (ZXing) embedded in certificates for verification.
-   - Visual mock Digital Signature Certificate (DSC) watermarks.
+### Frontend Setup
+The frontend is a modern Single Page Application (SPA) built with React and Vite.
 
-5. **Registries & Search**
-   - 7 distinct registries: Drugs, Medical Devices, Blood Banks, Cosmetics, Manufacturers, Testing Labs, and Subject Matter Experts.
-
-6. **Dashboards & Analytics**
-   - Custom dashboards for Industry users, CDSCO Officers, and Administrators.
-   - Aggregated KPIs, charts, and state-wise geographic distributions.
-
-7. **Audit & Notifications**
-   - Immutable Audit Logs via the Audit Service.
-   - Real-time Server-Sent Events (SSE) pushing instant in-app notifications to the global `<AppHeader />` bell.
-
-8. **Presentation & Demo Mode**
-   - Seamless data loading (50+ certificates, 200+ drugs, 10 orgs).
-   - Hidden `/demo` control panel to trigger SSE notifications and reset data.
-   - Framer Motion UI transitions for a polished feel.
-
-## Architecture
-
-The DDRS is built on a modern stack:
-- **Frontend**: React 18, TypeScript, Material UI (v5), Redux Toolkit, Framer Motion.
-- **Backend**: Java 21, Spring Boot 3.3.x, Spring Data JPA.
-- **Infrastructure**: Docker Compose, PostgreSQL 16, MinIO, Redis, Nginx (API Gateway).
-
-## Getting Started
-
-To run the entire application stack locally:
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/cdsco/ddrs-platform.git
-cd ddrs-platform
-
-# 2. Build and start all services via Docker Compose
-docker-compose up -d --build
-```
-
-### Accessing the Portal
-
-- **Frontend Application**: [http://localhost](http://localhost)
-- **Demo Control Panel**: [http://localhost/demo](http://localhost/demo) (Login as Admin)
-
-### Demo Credentials
-
-Select a user from the dropdown on the Login Page:
-- `admin@sunpharma.com` (Industry Applicant)
-- `officer@cdsco.gov.in` (CDSCO Officer)
-- `senior@cdsco.gov.in` (Senior Reviewer)
-- `admin@cdsco.gov.in` (System Administrator)
-
-## Project Structure
-
-- `/frontend`: React SPA source code.
-- `/services`: Spring Boot microservices (Identity, Organization, Licence, Workflow, Certificate, Registry, Dashboard, Master Data, Audit, Notification, Document).
-- `/nginx`: Nginx API gateway configuration.
-- `/data-loader`: Seed scripts that execute on container startup to populate the demo environment.
+1. Open a new terminal and navigate to the `frontend` directory:
+   ```bash
+   cd frontend
+   ```
+2. Install the necessary Node.js dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+4. The application will be available at **`http://localhost:3000`**.
 
 ---
-*Developed for the Government of India, Ministry of Health & Family Welfare (CDSCO).*
+
+## 2. System Flow
+
+The architecture follows a standard API Gateway pattern utilizing microservices for high scalability and separation of concerns.
+
+1. **Frontend (React + Vite)**: 
+   - Runs locally on port 3000.
+   - All API calls are prefixed with `/api/v1/`. The Vite development server acts as a local proxy, forwarding these requests to the NGINX API Gateway.
+2. **API Gateway (NGINX)**:
+   - Runs in a Docker container on port 80.
+   - Acts as the single entry point for all API requests.
+   - Routes incoming requests to the appropriate internal microservice based on the URL path (e.g., `/api/v1/auth/` routes to the `identity-service`, `/api/v1/organizations` routes to the `organization-service`).
+3. **Microservices (Spring Boot + Java 21)**:
+   - **Identity Service**: Manages users, JWT generation, and authentication.
+   - **Organization Service**: Handles organization registration, approval workflows, and organization-level data.
+   - **Licence Service**: Manages the lifecycle of drug applications (Form 40), processing, and approvals.
+   - **Notification Service**: Manages alerts and dummy integrations for SMS/Email notifications.
+   - *(Other services include workflow, document, certificate, registry, dashboard, admin, and audit).*
+4. **Database (PostgreSQL)**:
+   - A single PostgreSQL container hosts multiple logical databases (e.g., `ddrs_identity`, `ddrs_organizations`, `ddrs_licences`).
+   - Database schemas are strictly managed and version-controlled automatically upon startup using **Flyway** migrations.
+
+---
+
+## 3. End User Manual
+
+### Overview
+This demo supports the end-to-end journey of an Industry User interacting with the CDSCO portal to register their organization and apply for a drug manufacturing licence. 
+
+*(Note: For this demo, external integrations such as SMS, Email, OTP verification, Bharat Kosh payments, MCA, and Aadhaar have been mocked with dummy functionality).*
+
+### A. Organization Registration
+1. Navigate to the **Register** page from the main landing screen (`http://localhost:3000/register`).
+2. Fill out the **Organization Details** (e.g., Manufacturer, Organization Name, PAN, GST).
+3. Provide the **Authorised Signatory** details. For the Aadhaar Token field, you can enter any 12-digit number (e.g., `123456789012`).
+4. Enter your **Contact Credentials** (Mobile, Email, Password).
+5. Complete the dummy OTP verification process.
+6. Review the information and accept the declaration to submit the registration. The organization will be created in a `PENDING_APPROVAL` status.
+
+### B. User Login
+For demonstration purposes, the database is pre-seeded with a verified industry user account.
+1. Navigate to the **Login** page.
+2. Enter the following credentials to access the Industry Dashboard:
+   - **Email:** `industry@example.com`
+   - **Password:** `password`
+
+### C. Submitting a New Drug Application
+1. Once logged in as the industry user, navigate to the **Applications** section and click on **New Application**.
+2. **Application Type**: Select "Fresh Application" and choose the Drug Category (e.g., New Drug, Generic, FDC). The application fee will be auto-calculated based on your selection.
+3. **Drug Details**: Fill in the required medical properties (Generic Name, Brand Name, Dosage Form, Therapeutic Category, etc.).
+4. **Manufacturer Info**: Input your manufacturing site license number and declare any Foreign Regulatory Approvals.
+5. **Documents Upload**: For this demo, no real file uploads are required; you may skip or use placeholder PDFs.
+6. **Fee & Payment**: Use the dummy "Payment Simulator" to bypass Bharat Kosh payment processing and instantly generate a UTR payment reference.
+7. **Digital Signature (DSC)**: When prompted for the DSC Token PIN, use the demo hint PIN: **`123456`**.
+8. **Review & Submit**: Submit the final application. You will receive an Application Reference Number (ARN), and the application status will change to `DRAFT` or `SUBMITTED`.

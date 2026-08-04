@@ -47,6 +47,30 @@ public class Organization {
     @Column(name = "status")
     private String status = "PENDING_APPROVAL";
 
+    @Column(name = "cin_llpin")
+    private String cinLlpin;
+
+    @Column(name = "contact_person_name")
+    private String contactPersonName;
+
+    @Column(name = "contact_person_designation")
+    private String contactPersonDesignation;
+
+    @Column(name = "aadhaar_token")
+    private String aadhaarToken;
+
+    @Column(name = "alternate_mobile")
+    private String alternateMobile;
+
+    @Column(name = "alternate_email")
+    private String alternateEmail;
+
+    @Column(name = "user_type")
+    private String userType;
+
+    @Column(name = "ddrs_user_id")
+    private String ddrsUserId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

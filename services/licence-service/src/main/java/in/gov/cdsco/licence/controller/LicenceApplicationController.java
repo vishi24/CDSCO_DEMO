@@ -56,4 +56,29 @@ public class LicenceApplicationController {
         String remarks = payload != null ? payload.getOrDefault("remarks", "") : "";
         return ResponseEntity.ok(service.updateApplicationStatus(id, "REJECTED", remarks));
     }
+
+    /**
+     * PATCH /api/v1/applications/{id}
+     * Partial update — used for officer assignment, scrutiny status etc.
+     */
+    @PatchMapping("/{id}")
+    public ResponseEntity<LicenceApplication> patchApplication(
+            @PathVariable UUID id,
+            @RequestBody Map<String, Object> updates) {
+        return ResponseEntity.ok(service.patchApplication(id, updates));
+    }
+
+    /**
+     * POST /api/v1/applications/{id}/transition
+     * Generic workflow transition called from ApplicationReview frontend.
+     * Delegates to the workflow service (demo: updates status directly on application).
+     */
+    @PostMapping("/{id}/transition")
+    public ResponseEntity<LicenceApplication> transition(
+            @PathVariable UUID id,
+            @RequestBody Map<String, Object> payload) {
+        String toStage  = (String) payload.getOrDefault("toStage", "");
+        String comments = (String) payload.getOrDefault("comments", "");
+        return ResponseEntity.ok(service.updateApplicationStatus(id, toStage, comments));
+    }
 }
