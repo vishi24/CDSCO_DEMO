@@ -12,10 +12,11 @@ ON CONFLICT DO NOTHING;
 -- Connect to identity DB to insert Users
 \c ddrs_identity
 
-INSERT INTO users (id, keycloak_user_id, organization_id, full_name, email, role, is_active) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'keycloak-ind-1', '11111111-1111-1111-1111-111111111111', 'Sun Pharma Admin', 'admin@sunpharma.com', 'INDUSTRY', true),
-('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'keycloak-off-1', NULL, 'Dr. CDSCO Officer', 'officer@cdsco.gov.in', 'CDSCO_OFFICER', true),
-('cccccccc-cccc-cccc-cccc-cccccccccccc', 'keycloak-sen-1', NULL, 'Senior Reviewer', 'senior@cdsco.gov.in', 'CDSCO_SENIOR', true)
+-- Password for all is 'password' (BCrypt hash, strength 10)
+INSERT INTO users (id, keycloak_user_id, organization_id, full_name, email, role, is_active, password_hash) VALUES
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'keycloak-ind-1', '11111111-1111-1111-1111-111111111111', 'Sun Pharma Admin', 'admin@sunpharma.com', 'INDUSTRY', true, '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWq'),
+('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'keycloak-off-1', NULL, 'Dr. CDSCO Officer', 'officer@cdsco.gov.in', 'CDSCO_OFFICER', true, '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWq'),
+('cccccccc-cccc-cccc-cccc-cccccccccccc', 'keycloak-sen-1', NULL, 'Senior Reviewer', 'senior@cdsco.gov.in', 'CDSCO_SENIOR', true, '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWq')
 ON CONFLICT DO NOTHING;
 
 -- Connect to registry DB to insert Drugs
@@ -29,7 +30,7 @@ ON CONFLICT DO NOTHING;
 
 -- Insert Medical Devices
 INSERT INTO medical_devices (id, registry_id, device_name, device_class, manufacturer_id, status) VALUES
-('m1111111-1111-1111-1111-111111111111', 'REG-M-001', 'MRI Scanner Magnetom', 'CLASS_C', '44444444-4444-4444-4444-444444444444', 'REGISTERED')
+('e1111111-1111-1111-1111-111111111111', 'REG-M-001', 'MRI Scanner Magnetom', 'CLASS_C', '44444444-4444-4444-4444-444444444444', 'REGISTERED')
 ON CONFLICT DO NOTHING;
 
 -- Connect to licence DB to insert Applications

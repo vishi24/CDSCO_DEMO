@@ -18,7 +18,7 @@ export const cdscoColors = {
     contrastText: '#FFFFFF',
   },
   background: {
-    default: '#F0F4F8',
+    default: '#FF6B35',
     paper: '#FFFFFF',
     surface: 'rgba(255, 255, 255, 0.8)', // For glassmorphism
   },
