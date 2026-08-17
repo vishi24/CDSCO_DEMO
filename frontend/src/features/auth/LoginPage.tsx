@@ -54,7 +54,9 @@ export const LoginPage: React.FC = () => {
       else if (role === 'ADMIN') navigate('/admin/dashboard');
       else navigate('/industry/dashboard');
     } catch (err: any) {
-      setError(err.response?.data || 'Invalid credentials. Please try again.');
+      const data = err.response?.data;
+      const message = typeof data === 'string' ? data : data?.message || data?.error;
+      setError(message || 'Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }
