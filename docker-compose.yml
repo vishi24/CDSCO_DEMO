@@ -45,14 +45,14 @@ services:
       - "9200:9200"
 
   ddrs-nginx:
-    image: nginx:alpine
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports: 
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      # The frontend build will be mapped here later
-      - ./frontend/dist:/usr/share/nginx/html  
     depends_on: 
       - identity-service
       - organization-service
