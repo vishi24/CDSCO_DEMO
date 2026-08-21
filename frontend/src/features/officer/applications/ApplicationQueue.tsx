@@ -7,8 +7,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const STATUS_FILTERS = ['ALL', 'SUBMITTED', 'SCRUTINY', 'INSPECTION_SCHEDULED', 'QUERY_RAISED', 'APPROVED', 'REJECTED'];
-const CATEGORY_FILTERS = ['ALL', 'NEW_DRUG', 'GENERIC', 'FDC', 'BIOLOGICAL', 'MEDICAL_DEVICE'];
 
 const getStatusColor = (status: string): any => {
   switch (status) {
@@ -37,27 +35,41 @@ export const ApplicationQueue: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [stateFilter, setStateFilter] = useState('ALL');
   const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
-    axios.get('/api/v1/applications')
-      .then(res => {
-        const activeApps = res.data.filter((a: any) => a.currentStatus !== 'DRAFT');
+    Promise.all([
+      axios.get('/api/v1/applications'),
+      axios.get('/api/v1/organizations')
+    ])
+      .then(([appRes, orgRes]) => {
+        const orgMap = new Map<string, any>(orgRes.data.map((o: any) => [o.id, o]));
+        const activeApps = appRes.data.filter((a: any) => a.currentStatus !== 'DRAFT').map((a: any) => ({
+          ...a,
+          state: orgMap.get(a.organizationId)?.stateCode || 'Unknown',
+          displayCategory: (a.drugCategory || a.subCategory || a.licenceType || '—')
+        }));
         setRows(activeApps);
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
 
+  const uniqueStates = ['ALL', ...Array.from(new Set(rows.map(r => r.state))).filter(s => s !== 'Unknown').sort()];
+  const uniqueStatuses = ['ALL', ...Array.from(new Set(rows.map(r => r.currentStatus))).sort()];
+  const uniqueCategories = ['ALL', ...Array.from(new Set(rows.map(r => r.displayCategory))).filter(c => c !== '—').sort()];
+
   const filtered = rows.filter(r => {
     const matchStatus = statusFilter === 'ALL' || r.currentStatus === statusFilter;
-    const matchCategory = categoryFilter === 'ALL' || r.drugCategory === categoryFilter || r.subCategory === categoryFilter;
+    const matchCategory = categoryFilter === 'ALL' || r.displayCategory === categoryFilter;
+    const matchState = stateFilter === 'ALL' || r.state === stateFilter;
     const matchSearch = !searchText ||
       r.applicationNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
       r.arnNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
       r.drugName?.toLowerCase().includes(searchText.toLowerCase()) ||
       r.genericName?.toLowerCase().includes(searchText.toLowerCase());
-    return matchStatus && matchCategory && matchSearch;
+    return matchStatus && matchCategory && matchState && matchSearch;
   });
 
   const urgentCount = rows.filter(r => {
@@ -97,7 +109,7 @@ export const ApplicationQueue: React.FC = () => {
         <Typography variant="body2" color="textSecondary"  sx={{ fontWeight: 600 }}>Status:</Typography>
         <ToggleButtonGroup size="small" exclusive value={statusFilter}
           onChange={(_, v) => v && setStatusFilter(v)}>
-          {STATUS_FILTERS.map(s => (
+          {uniqueStatuses.map((s: any) => (
             <ToggleButton key={s} value={s} sx={{ textTransform: 'none', fontSize: 12 }}>
               {s === 'ALL' ? 'All' : s.replace('_', ' ')}
             </ToggleButton>
@@ -106,8 +118,15 @@ export const ApplicationQueue: React.FC = () => {
 
         <Typography variant="body2" color="textSecondary"  sx={{ ml: 2, fontWeight: 600 }}>Category:</Typography>
         <FormControl size="small" sx={{ minWidth: 160 }}>
-          <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
-            {CATEGORY_FILTERS.map(c => <MenuItem key={c} value={c}>{c === 'ALL' ? 'All Categories' : c.replace('_', ' ')}</MenuItem>)}
+          <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value as string)}>
+            {uniqueCategories.map((c: any) => <MenuItem key={c} value={c}>{c === 'ALL' ? 'All Categories' : c.replace(/_/g, ' ')}</MenuItem>)}
+          </Select>
+        </FormControl>
+
+        <Typography variant="body2" color="textSecondary"  sx={{ ml: 2, fontWeight: 600 }}>State:</Typography>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <Select value={stateFilter} onChange={e => setStateFilter(e.target.value as string)}>
+            {uniqueStates.map((s: any) => <MenuItem key={s} value={s}>{s === 'ALL' ? 'All States' : s}</MenuItem>)}
           </Select>
         </FormControl>
       </Box>
@@ -119,6 +138,7 @@ export const ApplicationQueue: React.FC = () => {
               <TableCell sx={{ fontWeight: 600 }}>ARN / Ref. No.</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Drug Name</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>State</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Assigned Officer</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Priority</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
@@ -129,13 +149,13 @@ export const ApplicationQueue: React.FC = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                   <Typography color="textSecondary">Loading...</Typography>
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                   <Typography color="textSecondary">No applications match the selected filters.</Typography>
                 </TableCell>
               </TableRow>
@@ -154,7 +174,10 @@ export const ApplicationQueue: React.FC = () => {
                     {row.brandName && <Typography variant="caption" color="textSecondary">{row.brandName}</Typography>}
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">{(row.drugCategory || row.subCategory || row.licenceType || '—').replace('_', ' ')}</Typography>
+                    <Typography variant="body2">{row.displayCategory.replace(/_/g, ' ')}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{row.state}</Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">{row.assignedOfficerName || '—'}</Typography>
